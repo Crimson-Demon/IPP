@@ -1,3 +1,7 @@
+//
+// Created by marcin on 3/25/16.
+//
+
 #include "structure.h"
 #include <stdlib.h>
 #include <string.h>
@@ -5,7 +9,7 @@
 /*---------------------------------------------------------------------------*/
 //ILLNESS - METHODS
 /*---------------------------------------------------------------------------*/
-IllnessPtr IllnessCreate(char* name, char* description) {
+IllnessPtr IllnessConstruct(char* name, char* description) {
 	if(name != NULL && description != NULL) {
 		IllnessPtr illnessPtr = malloc(sizeof(IllnessPtr*));
 		illnessPtr->name = malloc(sizeof(*name));
@@ -34,29 +38,21 @@ int IllnessGetCount(IllnessPtr illnessPtr) {
 		return -1;
 }
 
-int IllnessIncreaseCount(IllnessPtr illnessPtr) {
+void IllnessIncreaseCount(IllnessPtr illnessPtr) {
 	if(illnessPtr != NULL) {
 		illnessPtr->counter++;
-		return ILLNESS_INCR_SUCC;
-	} else
-		return ILLNESS_INCR_FAIL:
+	}
 }
 
-int IllnessDecreaseCount(IllnessPtr illnessPtr) {
+void IllnessDecreaseCount(IllnessPtr illnessPtr) {
 	if(illnessPtr != NULL) {
 		illnessPtr->counter--;
 		if(illnessPtr->counter == 0)
-			if(IllnessClear(illnessPtr))
-				return ILLNESS_DECR_SUCC;
-			else
-				return ILLNESS_CLEAR_FAIL;
-		else
-			return ILLNESS_DECR_SUCC;
-	} else
-		return ILLNESS_DECR_FAIL:
+			IllnessClear(illnessPtr);
+	}
 }
 
-int IllnessClear(IllnessPtr illnessPtr) {
+void IllnessClear(IllnessPtr illnessPtr) {
 	if(illnessPtr != NULL) {
 		if(illnessPtr->name != NULL) {
 			free(illnessPtr->name);
@@ -66,21 +62,15 @@ int IllnessClear(IllnessPtr illnessPtr) {
 			free(illnessPtr->description);
 			illnessPtr->description = NULL;
 		}
-		return ILLNESS_CLEAR_SUCC;
-	} else
-		return ILLNESS_CLEAR_FAIL;
+	}
 }
 
-int IllnessDelete(IllnessPtr illnessPtr) {
+void IllnessDelete(IllnessPtr illnessPtr) {
 	if(illnessPtr != NULL) {
-		if(IllnessClear(illnessPtr)) {
-			free(illnessPtr);
-			illnessPtr = NULL;
-			return ILLNESS_DELTE_SUCC;
-		} else
-			return ILLNESS_CLEAR_FAIL;
-	} else
-		return ILLNESS_DELTE_FAIL;
+        IllnessClear(illnessPtr);
+        free(illnessPtr);
+        illnessPtr = NULL;
+	}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -104,7 +94,7 @@ IllnessList IListGetNext(IllnessList illnessList) {
 		return NULL;
 }
 
-bool IListAdd(IllnessList illnessList, IllnessPtr illnessPtr) {
+void IListAdd(IllnessList illnessList, IllnessPtr illnessPtr) {
 	if(illnessList != NULL) {
 		if(illnessPtr != NULL) {
 			IllnessList illnessListNew = malloc(sizeof(*IllnessList));
@@ -114,16 +104,13 @@ bool IListAdd(IllnessList illnessList, IllnessPtr illnessPtr) {
 			while(illnessListEnd->next != NULL)
 				illnessListEnd = IListGetNext(illnessListEnd);
 			illnessListEnd->next = illnessListNew;
-			return TRUE;
-		} else
-			return FALSE;
+		}
 	} else {
 		if(illnessPtr != NULL) {
 			illnessList = malloc(sizeof(*IllnessList));
 			illnessList->illness = illnessPtr;
 			illnessList->next = NULL;
-		} else
-			return FALSE;
+		}
 	}
 }
 
@@ -163,7 +150,7 @@ IllnessPtr IListChangeNthDescr(IllnessList illnessList, int n, char* descr) {
 				illnessListTmp = IListGetNext(illnessListTmp);
 				n--;
 			}
-			IllnessPtr illnessPtr = IllnessCreate(illnessListTmp->illness->name, descr);
+			IllnessPtr illnessPtr = IllnessConstruct(illnessListTmp->illness->name, descr);
 			IllnessDecreaseCount(illnessListTmp->illness);
 			illnessListTmp->illness = illnessPtr;
 			return illnessPtr;
@@ -189,20 +176,18 @@ char* IListPrintNthDescr(IllnessList illnessList, int n) {
 }
 
 //TODO
-bool IListClear(IllnessList illnessList) {
+void IListClear(IllnessList illnessList) {
 	if(illnessList != NULL) {
 		IllnessList illnessListTmp = illnessList;
 		while(illnessListTmp != NULL) {
 			IllnessDecreaseCount(illnessListTmp->illness);
 			illnessListTmp = IListGetNext(illnessListTmp);
 		}
-		return TRUE;
-	} else
-		return FALSE;
+	}
 }
 
 //TODO
-bool IListDelete(IllnessList illnessList) {
+void IListDelete(IllnessList illnessList) {
 	if(illnessList != NULL) {
 		IllnessList illnessListTmp = illnessList;
 		IllnessList illnessListTmp2 = NULL;
@@ -211,9 +196,7 @@ bool IListDelete(IllnessList illnessList) {
 			illnessListTmp = IListGetNext(illnessListTmp);
 			IllnessDelete(illnessListTmp2->illness);
 		}
-		return TRUE;
-	} else
-		return FALSE;
+	}
 }
 
 /*---------------------------------------------------------------------------*/
@@ -227,19 +210,14 @@ PatientPtr PatientCreate(char* surname) {
 		memcpy(&(patientPtr->surname), &surname, sizeof(*surname));
 		return patientPtr;
 	} else
-		return NULL;	
+		return NULL;
 }
 
-bool PatientAdd(PatientPtr patientPtr, IllnessPtr illnessPtr) {
+void PatientAdd(PatientPtr patientPtr, IllnessPtr illnessPtr) {
 	if(patientPtr != NULL) {
 		if(patientPtr->history != NULL)
-			return IListADD(patientPtr->history, illnessPtr);
-		else {
-			history = IListCreate(illnessPtr);
-			return (history != NULL);
-		}
-	} else
-		return FALSE;
+			IListAdd(patientPtr->history, illnessPtr);
+	}
 }
 
 IllnessPtr PatientChangeNthDescr(PatientPtr patientPtr, int n, char* descr) {
@@ -304,7 +282,7 @@ int PListGetLength(PatientList patientList) {
 		return 0;
 }
 
-bool PListAddPatient(PalientList patientList, PatientPtr patientPtr) {
+bool PListAddPatient(PatientList patientList, PatientPtr patientPtr) {
 	if(patientList != NULL) {
 		if(patientPtr != NULL) {
 			PatientList patientListTmp = patientList;
@@ -338,7 +316,7 @@ char* PListPrintNthDescr(PatientList patientList, char* surname, int n) {
 		} else
 			return NULL;
 	} else
-		return NULL;	
+		return NULL;
 }
 
 //TODO
@@ -360,7 +338,7 @@ bool PListHas(PatientList patientList, char* surname) {
         }
         return found;
     } else
-        return FALSE;    
+        return FALSE;
 }
 
 bool PListModifyNthDescr(PatientList patientList, char* surname, int n, char* descr) {
