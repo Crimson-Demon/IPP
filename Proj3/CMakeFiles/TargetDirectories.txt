@@ -1,0 +1,2 @@
+/home/marcin/IPP/proj3/CMakeFiles/doc.dir
+/home/marcin/IPP/proj3/CMakeFiles/middle_ages.dir
