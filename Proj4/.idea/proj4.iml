@@ -2,12 +2,14 @@
 <module type="CPP_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src/middle_ages.c" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test_util.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/engine.c" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/engine.h" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/src/parse.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/parse.h" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/middle_ages.c" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/parse.c" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src/engine.h" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/Doxyfile.in" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/tests/test_middle_ages.c" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/CMakeLists.txt" isTestSource="false" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />

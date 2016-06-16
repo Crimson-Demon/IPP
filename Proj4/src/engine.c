@@ -319,6 +319,21 @@ bool can_move(int x1, int y1, int x2, int y2) {
 }
 
 int move(int x1, int y1, int x2, int y2) {
+    /*fprintf(stderr, "coords = %d %d %d %d\n", x1, y1, x2, y2);
+    fprintf(stderr, "x1 and board size = %d %d\n", x1, board.size - 1);
+    fprintf(stderr, "x2 and board size = %d %d\n", x2, board.size - 1);
+    fprintf(stderr, "y1 and board size = %d %d\n", y1, board.size - 1);
+    fprintf(stderr, "y2 and board size = %d %d\n", y2, board.size - 1);
+    fprintf(stderr, "empty = %d\n",is_empty(x1, y1));
+    fprintf(stderr, "our unit = %d\n",(get_unit(x1, y1)->owner == PLAYER_1) != player_1_turn);
+    fprintf(stderr, "unit owner = %d\n", get_unit(x1, y1)->owner);
+    fprintf(stderr, "Player 1 = %d\n", PLAYER_1);
+    fprintf(stderr, "unit owner is player 1 = %d\n", get_unit(x1, y1)->owner == PLAYER_1);
+    fprintf(stderr, "player 1 turn = %d\n", player_1_turn);
+    fprintf(stderr, "our turn = %d\n", our_turn);
+    fprintf(stderr, "non empty theirs + their unit = %d\n",!(is_empty(x2, y2)) && (get_unit(x2, y2)->owner == PLAYER_1) == player_1_turn);
+    fprintf(stderr, "not adjacent = %d\n", not_adjacent(x1, y1, x2, y2));
+    fprintf(stderr, "cant move = %d\n", get_unit(x1, y1)->last_move == cur_turn);*/
     if(can_move(x1, y1, x2, y2)) {
         if(is_empty(x2, y2)) {
             unit_ptr unit_temp = get_unit(x1, y1);
@@ -362,6 +377,9 @@ int move(int x1, int y1, int x2, int y2) {
 }
 
 bool can_produce(int x1, int y1, int x2, int y2) {
+    /*fprintf(stderr, "can produce = %d\n", get_unit(x1, y1)->last_move + 3 > cur_turn);
+    fprintf(stderr, "last move = %d\n", get_unit(x1, y1)->last_move);
+    fprintf(stderr, "current turn = %d\n", cur_turn);*/
     if(x1 < 0 || x2 < 0 || y1 < 0 || y2 < 0)
        return false;
     else if(x1 > board.size - 1 || x2 > board.size - 1 || y1 > board.size - 1 || y2 > board.size - 1)
@@ -399,9 +417,10 @@ int produce_peasant(int x1, int y1, int x2, int y2) {
 }
 
 int end_turn() { ;
-    //if(!player_1_turn)
+    if(!player_1_turn)
+        cur_turn++;
     our_turn = !our_turn;
-    cur_turn++;
+    player_1_turn = !player_1_turn;
     return OK;
 }
 
@@ -433,6 +452,9 @@ void king_acts() {
         for(int j = 0; j < 3; j++)
             potential_moves[i][j] = true;
     unit_list_elem_ptr enemy_list = us.king == player_1.king ? board.player_2_list : board.player_1_list;
+    fprintf(stderr, "our king = %d\n", us.king);
+    fprintf(stderr, "player 1 king = %d\n", player_1.king);
+    fprintf(stderr, "our king is player 1 king = %d\n", us.king == player_1.king);
     while(enemy_list != null) {
         int diff_x = enemy_list->unit->x - king_temp->x;
         int diff_y = enemy_list->unit->y - king_temp->y;
@@ -463,6 +485,7 @@ void king_acts() {
         enemy_list = enemy_list->next;
     }
     if(has_to_evade) {
+        fprintf(stderr, "King has to evade!");
         bool has_evaded = false;
         for(int i = 0; i < 3 && !has_evaded; i++)
             for(int j = 0; j < 3 && !has_evaded; j++)
@@ -472,81 +495,111 @@ void king_acts() {
                     if(can_move(x, y, x + i + 1, y + j + 1)) {
                         move(x, y, x + i + 1, y + j + 1);
                         has_evaded = true;
+                        fprintf(stdout, "MOVE %d %d %d %d\n", x + 1, y + 1, x + 1 + i + 1, y + 1 + j + 1);
                     }
                 }
     }
 }
 
+unit_ptr find_closest_unit(unit_ptr unit) {
+    unit_list_elem_ptr enemy_list_head = us.king == player_1.king ? board.player_2_list : board.player_1_list;
+    unit_list_elem_ptr enemy_list_temp = enemy_list_head;
+    unit_ptr closest_unit = null;
+    //Unit seek out closest units
+    while(enemy_list_temp != null) {
+        fprintf(stderr, "Enemy unit is = %d\n", enemy_list_temp->unit->type);
+        if(closest_unit == null)
+            closest_unit = enemy_list_temp->unit;
+        else {
+            //compare with previous closest unit and update if neccessary
+            int x = unit->x;
+            int y = unit->y;
+            int x_old = closest_unit->x;
+            int y_old = closest_unit->y;
+            int x_new = enemy_list_temp->unit->x;
+            int y_new = enemy_list_temp->unit->y;
+            int old_dist = max(abs(x - x_old), abs(y - y_old));
+            int new_dist = max(abs(x - x_new), abs(y - y_new));
+            if(new_dist < old_dist)
+                closest_unit = enemy_list_temp->unit;
+        }
+        enemy_list_temp = enemy_list_temp->next;
+    }
+    return closest_unit;
+}
+
+void move_towards(int x1, int y1, int x2, int y2) {
+    int diff_x = x1 - x2;
+    int diff_y = y1 - y2;
+    fprintf(stderr, "Our position = %d %d\n", x1, y1);
+    fprintf(stderr, "Closest enemy position = %d %d\n", x2, y2);
+    fprintf(stderr, "Differences in x and y positions = %d %d\n", diff_x, diff_y);
+    if (diff_x != 0 && diff_y != 0) {
+        fprintf(stderr, "Moving diagonally\n");
+        //we move diagonally until we are on the same line
+        //if we can't move diagonally, then we move straight in the best direction.
+        //if we cant' even do that, then dang.
+        int sign_y = x1 > x2 ? -1 : 1;
+        int sign_x = y1 > y2 ? -1 : 1;
+        if(can_move(x1, y1, x1 + 1 * sign_x, y1 + 1 * sign_y)) {
+            move(x1, y1, x1 + 1 * sign_x, y1 + 1 * sign_y);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + 1 * sign_x, y1 + 1 + 1 * sign_y);
+        } else {
+            if(can_move(x1, y1, x1 + 1*sign_x, y1)) {
+                move(x1, y1, x1 + 1 * sign_x, y1);
+                fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + 1 * sign_x, y1 + 1);
+            } else if(can_move(x1, y1, x1, y1 + 1*sign_y)) {
+                move(x1, y1, x1, y1 + 1 * sign_y);
+                fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1, y1 + 1 + 1 * sign_y);
+            }
+        }
+    } else
+        fprintf(stderr, "Moving forward!\n");
+    //we move forward, deviating only, if we cant move straight forward
+    //if there is no possibility to move forward, then we don't move
+    if(x1 - x2 == 0) {
+        int sign = y1 > y2 ? -1 : 1;
+        if(can_move(x1, y1, x1, y1 + sign * 1)) {
+            move(x1, y1, x1, y1 + sign * 1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1, y1 + 1 + sign * 1);
+        } else
+        if(can_move(x1, y1, x1 + 1, y1 + sign*1)) {
+            move(x1, y1, x1 + 1, y1 + sign * 1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + 1, y1 + 1 + sign * 1);
+        } else if(can_move(x1, y1, x1 - 1, y1 + sign*1)) {
+            move(x1, y1, x1 - 1, y1 + sign * 1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 - 1 + 1, y1 + 1 + sign * 1);
+        }
+    } else {
+        int sign = x1 > x2 ? -1 : 1;
+        if(can_move(x1, y1, x1 + sign*1, y1)) {
+            move(x1, y1, x1 + sign * 1, y1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + sign * 1, y1 + 1);
+        } else
+        if(can_move(x1, y1, x1 + sign*1, y1 + 1)) {
+            move(x1, y1, x1 + sign * 1, y1 + 1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + sign * 1, y1 + 1 + 1);
+        } else if(can_move(x1, y1, x1 + sign*1, y1 - 1)) {
+            move(x1, y1, x1 + sign * 1, y1 - 1);
+            fprintf(stdout, "MOVE %d %d %d %d\n", x1 + 1, y1 + 1, x1 + 1 + sign * 1, y1 + 1 - 1);
+        }
+    }
+}
+
 void knights_act() {
     unit_list_elem_ptr our_list = us.king == player_1.king ? board.player_1_list : board.player_2_list;
-    unit_list_elem_ptr enemy_list_head = us.king == player_1.king ? board.player_2_list : board.player_1_list;
     while(our_list != null) {
         if(our_list->unit->type == KNIGHT) {
-            unit_list_elem_ptr enemy_list_temp = enemy_list_head;
-            unit_ptr closest_unit = null;
-            //Knights seek out closest units
-            while(enemy_list_temp != null) {
-                if(closest_unit == null)
-                    closest_unit = enemy_list_temp->unit;
-                else {
-                    //compare with previous closest unit and update if neccessary
-                    int x = our_list->unit->x;
-                    int y = our_list->unit->y;
-                    int x_old = closest_unit->x;
-                    int y_old = closest_unit->y;
-                    int x_new = enemy_list_temp->unit->x;
-                    int y_new = enemy_list_temp->unit->y;
-                    int old_dist = max(abs(x - x_old), abs(y - y_old));
-                    int new_dist = max(abs(x - x_new), abs(y - y_new));
-                    if(new_dist < old_dist)
-                        closest_unit = enemy_list_temp->unit;
-                }
-                enemy_list_temp = enemy_list_temp->next;
-            }
+            unit_ptr closest_unit = find_closest_unit(our_list->unit);
             //Move in the direction of the closest unit and fight
             if(closest_unit != null) {
                 int x = our_list->unit->x;
                 int y = our_list->unit->y;
                 int x_closest = closest_unit->x;
                 int y_closest = closest_unit->y;
-                int diff_x = x - x_closest;
-                int diff_y = y - y_closest;
-                if (diff_x != 0 && diff_y != 0) {
-                    //we move diagonally until we are on the same line
-                    //if we can't move diagonally, then we move straight in the best direction.
-                    //if we cant' even do that, then dang.
-                    int sign_y = x > x_closest ? -1 : 1;
-                    int sign_x = y > y_closest ? -1 : 1;
-                    if(can_move(x, y, x + 1*sign_x, y + 1*sign_y))
-                        move(x, y, x + 1*sign_x, y + 1*sign_y);
-                    else {
-                        if(can_move(x, y, x + 1*sign_x, y))
-                            move(x, y, x + 1*sign_x, y);
-                        else if(can_move(x, y, x, y + 1*sign_y))
-                            move(x, y, x, y + 1*sign_y);
-                    }
-                } else
-                    //we move forward, deviating only, if we cant move straight forward
-                    //if there is no possibility to move forward, then we don't move
-                    if(x - x_closest == 0) {
-                        int sign = y > y_closest ? -1 : 1;
-                        if(can_move(x, y, x, y + sign*1))
-                            move(x, y, x, y + sign*1);
-                        else
-                            if(can_move(x, y, x + 1, y + sign*1))
-                                move(x, y, x + 1, y + sign*1);
-                            else if(can_move(x, y, x - 1, y + sign*1))
-                                    move(x, y, x - 1, y + sign*1);
-                    } else {
-                        int sign = x > x_closest ? -1 : 1;
-                        if(can_move(x, y, x + sign*1, y))
-                            move(x, y, x + sign*1, y);
-                        else
-                            if(can_move(x, y, x + sign*1, y + 1))
-                                move(x, y, x + sign*1, y + 1);
-                            else if(can_move(x, y, x + sign*1, y - 1))
-                                move(x, y, x + sign*1, y - 1);
-                    }
+                move_towards(x, y, x_closest, y_closest);
+            } else {
+                fprintf(stderr, "there is no closest unit! WTF?!");
             }
         }
         our_list = our_list->next;
@@ -565,16 +618,22 @@ void peasants_act() {
         our_list = our_list->next;
     }
     if(count == 1) {
+        fprintf(stderr, "Only one peasant! Indeed, %d\n", count);
         int x = peasants[0]->x;
         int y = peasants[0]->y;
         bool has_produced = false;
         for(int i = 0; i < 3 && !has_produced; i++)
-            for(int j = 0; j < 3 && !has_produced; j++)
-                if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
+            for(int j = 0; j < 3 && !has_produced; j++) {
+                fprintf(stderr, "We are interested in producing on %d %d\n", x + 1 - 1 + i, y + 1 - 1 + j);
+                if (can_produce(x, y, x - 1 + i, y - 1 + j)) {
+                    fprintf(stderr, "We can produce!");
                     produce_peasant(x, y, x - 1 + i, y - 1 + j);
+                    fprintf(stdout, "PRODUCE_PEASANT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
                     has_produced = true;
                 }
+            }
     } else if(count == 2) {
+        fprintf(stderr, "We have a whole two peasants! Indeed, %d\n", count);
         int x = peasants[0]->x;
         int y = peasants[0]->y;
         bool has_produced = false;
@@ -582,6 +641,7 @@ void peasants_act() {
             for(int j = 0; j < 3 && !has_produced; j++)
                 if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
                     produce_knight(x, y, x - 1 + i, y - 1 + j);
+                    fprintf(stdout, "PRODUCE_KNIGHT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
                     has_produced = true;
                 }
         x = peasants[1]->x;
@@ -591,13 +651,19 @@ void peasants_act() {
             for(int j = 0; j < 3 && !has_produced; j++)
                 if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
                     produce_knight(x, y, x - 1 + i, y - 1 + j);
+                    fprintf(stdout, "PRODUCE_KNIGHT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
                     has_produced = true;
                 }
+    } else {
+        fprintf(stderr, "You shouldn't be here! Indeed, %d\n", count);
     }
 }
 
 void do_actions() {
     peasants_act();
+    fprintf(stderr, "Peasants have acted\n");
     king_acts();
+    fprintf(stderr, "King has acted\n");
     knights_act();
+    fprintf(stderr, "Knights have acted\n");
 }

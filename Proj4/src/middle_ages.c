@@ -24,7 +24,8 @@ int main() {
                                 new_command->data[5],
                                 new_command->data[6]);
                 if(code == INIT_ERROR) {
-                    //fprintf(stderr, "input error\n");
+                    fprintf(stderr, "input error INIT\n");
+                    fprintf(stderr, "INIT %d %d %d %d %d %d %d\n", new_command->data[0], new_command->data[1], new_command->data[2], new_command->data[3], new_command->data[4], new_command->data[5], new_command->data[6]);
                     free(new_command);
                     end_game();
                     return 42;
@@ -37,6 +38,7 @@ int main() {
                      new_command->data[5],
                      new_command->data[6]);
                 if(new_command->data[2] == 1) {
+                    fprintf(stderr, "We are player 1!!\n");
                     us = player_1;
                     our_turn = true;
                     do_actions();
@@ -47,11 +49,12 @@ int main() {
                         break;
                     }
                 } else {
+                    fprintf(stderr, "We are player 2!!\n");
                     us = player_2;
                     our_turn = false;
                 }
             } else {
-                //fprintf(stderr, "input error\n");
+                fprintf(stderr, "input error COMPLETE\n");
                 free(new_command);
                 end_game();
                 return 42;
@@ -63,7 +66,8 @@ int main() {
                                 new_command->data[5],
                                 new_command->data[6]);
                 if(code == MOVE_ERROR) {
-                    //fprintf(stderr, "input error\n");
+                    fprintf(stderr, "input error MOVE\n");
+                    fprintf(stderr, "MOVE %d %d %d %d\n", new_command->data[3], new_command->data[4], new_command->data[5], new_command->data[6]);
                     free(new_command);
                     end_game();
                     return 42;
@@ -78,7 +82,8 @@ int main() {
                                           new_command->data[5],
                                           new_command->data[6]);
                 if(code == PRODUCE_ERROR) {
-                    //fprintf(stderr, "input error\n");
+                    fprintf(stderr, "input error KNIGHT\n");
+                    fprintf(stderr, "PRODUCE_KNIGHT %d %d %d %d\n", new_command->data[3], new_command->data[4], new_command->data[5], new_command->data[6]);
                     free(new_command);
                     end_game();
                     return 42;
@@ -92,7 +97,8 @@ int main() {
                                            new_command->data[5],
                                            new_command->data[6]);
                 if(code == PRODUCE_ERROR) {
-                    //fprintf(stderr, "input error\n");
+                    fprintf(stderr, "input error PEASANT\n");
+                    fprintf(stderr, "PRODUCE_PEASANT %d %d %d %d\n", new_command->data[3], new_command->data[4], new_command->data[5], new_command->data[6]);
                     free(new_command);
                     end_game();
                     return 42;
@@ -101,6 +107,7 @@ int main() {
                     break;
                 }
             } else if(strcmp(new_command->name, "END_TURN") == 0) {
+                end_turn();
                 do_actions();
                 end_turn();
                 fprintf(stdout, "END_TURN\n");
@@ -109,7 +116,7 @@ int main() {
                     break;
                 }
             } else {
-                //fprintf(stderr, "input error\n");
+                fprintf(stderr, "input error END\n");
                 free(new_command);
                 end_game();
                 return 42;
