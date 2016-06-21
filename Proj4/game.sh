@@ -1,5 +1,5 @@
 #!/bin/bash
-default_ai=./Release/middle_ages
+default_ai=./Debug/middle_ages
 gui=sredniowiecze_gui_linux64_v1/sredniowiecze_gui_with_libs.sh
 gui_in=3
 gui_out=4

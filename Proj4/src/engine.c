@@ -452,8 +452,8 @@ void king_acts() {
         for(int j = 0; j < 3; j++)
             potential_moves[i][j] = true;
     unit_list_elem_ptr enemy_list = us.king == player_1.king ? board.player_2_list : board.player_1_list;
-    fprintf(stderr, "our king = %d\n", us.king);
-    fprintf(stderr, "player 1 king = %d\n", player_1.king);
+    fprintf(stderr, "our king = %d\n", (int) us.king);
+    fprintf(stderr, "player 1 king = %d\n", (int) player_1.king);
     fprintf(stderr, "our king is player 1 king = %d\n", us.king == player_1.king);
     while(enemy_list != null) {
         int diff_x = enemy_list->unit->x - king_temp->x;
@@ -531,8 +531,8 @@ unit_ptr find_closest_unit(unit_ptr unit) {
 void move_towards(int x1, int y1, int x2, int y2) {
     int diff_x = x1 - x2;
     int diff_y = y1 - y2;
-    fprintf(stderr, "Our position = %d %d\n", x1, y1);
-    fprintf(stderr, "Closest enemy position = %d %d\n", x2, y2);
+    fprintf(stderr, "Our position = %d %d\n", x1 + 1, y1 + 1);
+    fprintf(stderr, "Closest enemy position = %d %d\n", x2 + 1, y2 + 1);
     fprintf(stderr, "Differences in x and y positions = %d %d\n", diff_x, diff_y);
     if (diff_x != 0 && diff_y != 0) {
         fprintf(stderr, "Moving diagonally\n");
@@ -606,6 +606,33 @@ void knights_act() {
     }
 }
 
+bool ai_produce_peasant(int x, int y) {
+    bool has_produced = false;
+    for(int i = 0; i < 3 && !has_produced; i++)
+        for(int j = 0; j < 3 && !has_produced; j++) {
+            fprintf(stderr, "We are interested in producing on %d %d\n", x + 1 - 1 + i, y + 1 - 1 + j);
+            if (can_produce(x, y, x - 1 + i, y - 1 + j)) {
+                fprintf(stderr, "We can produce!");
+                produce_peasant(x, y, x - 1 + i, y - 1 + j);
+                fprintf(stdout, "PRODUCE_PEASANT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
+                has_produced = true;
+            }
+        }
+    return has_produced;
+}
+
+bool ai_produce_knight(int x, int y) {
+    bool has_produced = false;
+    for(int i = 0; i < 3 && !has_produced; i++)
+        for(int j = 0; j < 3 && !has_produced; j++)
+            if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
+                produce_knight(x, y, x - 1 + i, y - 1 + j);
+                fprintf(stdout, "PRODUCE_KNIGHT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
+                has_produced = true;
+            }
+    return has_produced;
+}
+
 void peasants_act() {
     unit_list_elem_ptr our_list = us.king == player_1.king ? board.player_1_list : board.player_2_list;
     unit_ptr peasants[2];
@@ -621,39 +648,15 @@ void peasants_act() {
         fprintf(stderr, "Only one peasant! Indeed, %d\n", count);
         int x = peasants[0]->x;
         int y = peasants[0]->y;
-        bool has_produced = false;
-        for(int i = 0; i < 3 && !has_produced; i++)
-            for(int j = 0; j < 3 && !has_produced; j++) {
-                fprintf(stderr, "We are interested in producing on %d %d\n", x + 1 - 1 + i, y + 1 - 1 + j);
-                if (can_produce(x, y, x - 1 + i, y - 1 + j)) {
-                    fprintf(stderr, "We can produce!");
-                    produce_peasant(x, y, x - 1 + i, y - 1 + j);
-                    fprintf(stdout, "PRODUCE_PEASANT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
-                    has_produced = true;
-                }
-            }
+        ai_produce_peasant(x,y);
     } else if(count == 2) {
         fprintf(stderr, "We have a whole two peasants! Indeed, %d\n", count);
         int x = peasants[0]->x;
         int y = peasants[0]->y;
-        bool has_produced = false;
-        for(int i = 0; i < 3 && !has_produced; i++)
-            for(int j = 0; j < 3 && !has_produced; j++)
-                if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
-                    produce_knight(x, y, x - 1 + i, y - 1 + j);
-                    fprintf(stdout, "PRODUCE_KNIGHT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
-                    has_produced = true;
-                }
+        ai_produce_knight(x, y);
         x = peasants[1]->x;
         y = peasants[1]->y;
-        has_produced = false;
-        for(int i = 0; i < 3 && !has_produced; i++)
-            for(int j = 0; j < 3 && !has_produced; j++)
-                if(can_produce(x, y, x - 1 + i, y - 1 + j)) {
-                    produce_knight(x, y, x - 1 + i, y - 1 + j);
-                    fprintf(stdout, "PRODUCE_KNIGHT %d %d %d %d\n", x + 1, y + 1, x + 1 - 1 + i, y + 1 - 1 + j);
-                    has_produced = true;
-                }
+        ai_produce_knight(x, y);
     } else {
         fprintf(stderr, "You shouldn't be here! Indeed, %d\n", count);
     }
