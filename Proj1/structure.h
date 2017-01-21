@@ -1,168 +1,228 @@
-//
-// Created by marcin on 3/24/16.
-//
+// Author: Marcin Kania
 
 #ifndef HOSPITAL_STRUCTURE_H
 #define HOSPITAL_STRUCTURE_H
 
-#include <jmorecfg.h>
-
-/*TODO
-1.Should methods return bool or define int codes to denote success or failure
-2.Do I need to define boolean due to too old C standard
-3.Should create methods return an object or should they return success/failure and the object should be an argument
-4.Should I generalize all "classes" to constructor, copy constructor, comparison and destructor interfaces
-IDEA:
-    create methods take object as argument.
-    If null then it creates the object, else it increases its count/doesnt do anything
-    No need for increaseCounter or decreaseCounter methods
-    Clear and Destructor
-    Clear - deletes data held
-    Destructor - decreases ptr and deletes
-5.I need to look at the implementation of the smartPtr in C++
-*/
-
-//for bool type, true and false macros
+// For bool type, true and false macros
 #include <stdbool.h>
 
+// Defines for int return values for some methods
+#define DELETE_DISEASE_FAIL -2;
+#define CHANGE_DESCRIPTION_FAIL -1;
+#define DISEASE_DECREASED_COUNT 0;
+#define DISEASE_DELETED 1;
+
 /*---------------------------------------------------------------------------*/
-//ILLNESS - STRUCTURE AND METHODS
+// ILLNESS - DATA STRUCTURE DEFINITION AND METHODS DECLARATION
 /*---------------------------------------------------------------------------*/
-//Illness data structure
-//Works "like" a smartPtr in C++
-//Holds a counter of references to it
-//Dealocates the structure when the counter hits 0
-struct Illness {
-    char* name;
+
+// Disease data structure
+// Works "like" a smartPtr in C++
+// Holds a counter of references to it
+// Dealocates the structure when the counter hits 0
+struct Disease {
     char* description;
     int counter;
 };
 
-//Typedef for a ptr to the Illness structure
-typedef struct Illness* IllnessPtr;
+// Typedef for a ptr to the Disease structure
+typedef struct Disease* DiseasePtr;
 
-//Function
-//Creates an illness with name and description specified by args
-//Returns ptr to data structure
-IllnessPtr IllnessConstruct(char* name, char* description);
+// Creates an disease with name and description specified by args
+// Returns ptr to data structure
+DiseasePtr DiseaseCreate(char* description);
 
-//Function
-//Checks if you can create an illness with given name and description
-//returns boolean
-bool IllnessTryConstruct(char* namem char* description);
+// Returns the description of the disease specified by illnessPtr
+char* DiseasePrintDescription(DiseasePtr diseasePtr);
 
-//Function
-//Returns the description of the illness specified by illnessPtr
-char* IllnessPrintDescr(IllnessPtr illnessPtr);
+// Increases the number of references to illnessPtr
+void DiseaseIncreaseCount(DiseasePtr diseasePtr);
 
-//Function
-//Returns the number of references to illnessPtr
-int IllnessGetCount(IllnessPtr illnessPtr);
+// Decreases the number of references to illnessPtr
+// If it hits 0 then it calls DiseaseDelete
+// Returns DELETE_DISEASE_FAIL if it failed at decreasing the count
+// Returns DISEASE_DECREASED_COUNT if it succeeded in decreasing the count but didnt delete the disease
+// Returns DISEASE_DELETED if it succeeded in decreasing and deleting the disease
+int DiseaseDecreaseCount(DiseasePtr diseasePtr);
 
-//Function
-//Increases the number of references to illnessPtr
-void IllnessIncreaseCount(IllnessPtr illnessPtr);
+// unallocates data held by the ptr illnessPtr and dealocates structure
+void DiseaseDelete(DiseasePtr diseasePtr);
 
-//Function
-//Decreases the number of references to illnessPtr
-//If it hits 0 then it calls IllnessDelete
-void IllnessDecreaseCount(IllnessPtr illnessPtr);
-
-//Function
-//Dealocates data held by the ptr illnessPtr
-void IllnessClear(IllnessPtr illnessPtr);
-
-//Function
-//Dealocates data held by the ptr illnessPtr and dealocates structure
-void IllnessDestruct(IllnessPtr illnessPtr);
 /*---------------------------------------------------------------------------*/
-//ILLNESS LIST - DATA STRUCTURE AND METHODS
+// ILLNESS LIST - DATA STRUCTURE DEFINITION AND METHODS DECLARATION
 /*---------------------------------------------------------------------------*/
-//Prototype of Illness list element
-struct IllnessListElem;
 
-//Typedef for a ptr to a illness list element
-typedef struct IllnessListElem* IllnessList;
+// Prototype of Disease list element
+struct DiseaseListElem;
 
-//Illness list data structure
-//Holds a ptr to the illness and a ptr to the next element of the list
-struct IllnessListElem {
-    IllnessPtr illness;
-    IllnessList next;
+// Typedef for a ptr to a disease list element
+typedef struct DiseaseListElem* DiseaseList;
+
+// Disease list data structure
+// Holds a ptr to the disease and a ptr to the next element of the list
+struct DiseaseListElem {
+    DiseasePtr disease;
+    DiseaseList next;
 };
 
-IllnessList IListCreate(IllnessPtr illnessPtr);
+// Creates an disease list with a single disease in it using a description for a disease
+DiseaseList DListCreate1(char* description);
 
-IllnessList IListGetNext(IllnessList illnessList);
+// Creates an disease list with a single disease in it using a DiseasePtr
+DiseaseList DListCreate2(DiseasePtr diseasePtr);
 
-void IListAdd(IllnessList illnessList, IllnessPtr illnessPtr);
+// Governs the process behind the NEW_DISEASE_ENTER_DESCRIPTION related operation
+bool DListNewDisease(DiseaseList* diseaseList, char* description);
 
-int IListGetLength(IllnessList illnessList);
+// Gets the next element of the disease list
+DiseaseList DListGetNext(DiseaseList diseaseList);
 
-bool IListHas(IllnessList illnessList, IllnessPtr illnessPtr);
+// Adds an disease to the end of the disease list
+bool DListAdd(DiseaseList* diseaseList, DiseasePtr diseasePtr);
 
-IllnessPtr IListChangeNthDescr(IllnessList illnessList, int n, char* descr);
+// Governs the process behind the NEW_DISEASE_COPY_DESCRIPTION related operation
+bool DListCopyDisease(DiseaseList* diseaseList, DiseasePtr diseasePtr);
 
-char* IListPrintNthDescr(IllnessList illnessList, int n);
+// Gets the latest disease on the disease list
+DiseaseList DListGetLatestElement(DiseaseList diseaseList);
 
-void IListClear(IllnessList illnessList);
+// Gets the latest disease on the disease list
+DiseasePtr DListGetLatestDisease(DiseaseList diseaseList);
 
-void IListDelete(IllnessList illnessList);
+// Modifies the description of the nth disease on the list
+// Returns int corresponding to failure or global disease count change
+int DListChangeDescription(DiseaseList diseaseList, int n, char* description);
+
+// Returns the description of the nth disease on the list
+char* DListPrintDescription(DiseaseList diseaseList, int n);
+
+// Returns an disease list element that is the nth on the list or null
+DiseaseList DListGetNth(DiseaseList diseaseList, int n);
+
+// Empties the whole list
+int DListDelete(DiseaseList diseaseList);
+
 /*---------------------------------------------------------------------------*/
-//PATIENT - DATA STRUCTURE AND METHODS
+// PATIENT - DATA STRUCTURE DEFINITION AND METHODS DECLARATION
 /*---------------------------------------------------------------------------*/
-//Patient data structure
-//Holds the surname and illness history of patient
+
+// Patient data structure
+// Holds the name and disease history of patient
 struct Patient {
-    char* surname;
-    IllnessList history;
+    char* name;
+    DiseaseList history;
 };
 
+// Typedef for a pointer to a patient
 typedef struct Patient* PatientPtr;
 
-PatientPtr PatientCreate(char* surname);
+// Creates a patient with name and an empty disease list
+PatientPtr PatientCreate(char* name);
 
-bool PatientAdd(PatientPtr patientPtr, IllnessPtr illnessPtr);
+// Adds an disease given by its ptr to a patient given by his ptr
+bool PatientNewDisease(PatientPtr patientPtr, char* description);
 
-IllnessPtr PatientChangeNthDescr(PatientPtr patientPtr, int n, char* descr);
+// Adds an disease given by its ptr to a patient given by his ptr
+bool PatientCopyDisease(PatientPtr patientPtr1, PatientPtr patientPtr2);
 
-bool PatientHas(PatientPtr patientPtr, IllnessPtr illnessPtr);
+// Changes the description of the nth disease on the patients history
+int PatientChangeDescription(PatientPtr patientPtr, int n, char* description);
 
-char* PatientPrintNthDescr(PatientPtr patientPtr, int n);
+// Gets the latest disease of the patient
+DiseasePtr PatientGetLatestDisease(PatientPtr patientPtr);
 
-bool PatientClearHistory(PatientPtr patientPtr);
+// Retuns a string corresponding to the patients nth disease' description
+char* PatientPrintDescription(PatientPtr patientPtr, int n);
+
+// Clears the patients disease history
+int PatientDeletePatient(PatientPtr patientPtr);
+
+// Deletes the patient
+void PatientDelete(PatientPtr patientPtr);
+
+// Compares one patient with another based on name
+bool PatientCompare(PatientPtr patientPtr, char* name);
+
 /*---------------------------------------------------------------------------*/
-//PATIENT LIST - DATA STRUCTURE AND METHODS
+// PATIENT LIST - DATA STRUCTURE DEFINITION AND METHODS DECLARATION
 /*---------------------------------------------------------------------------*/
-//Patient list element structure prototype
+
+// Patient list element structure prototype
 struct PatientListElem;
 
-//Typedef for a ptr to a patient list element
+// Typedef for a ptr to a patient list element
 typedef struct PatientListElem* PatientList;
 
-//Patient list element data structure
-//Holds a ptr to the patient and a ptr to the next element of the list
+// Patient list element data structure
+// Holds a ptr to the patient and a ptr to the next element of the list
 struct PatientListElem {
     PatientPtr patient;
     PatientList next;
 };
 
+// Creates a patient list with a single patient
 PatientList PListCreate(PatientPtr patientPtr);
 
+// Gets the next element on the patient list
 PatientList PListGetNext(PatientList patientList);
 
-int PListGetLength(PatientList patientList);
+// Finds a patient given by his name or returns NULL
+PatientPtr PListFind(PatientList patientList, char* name);
 
-bool PListAddPatient(PatientList patientList, PatientPtr patientPtr);
+bool PListNewDisease(PatientList* patientList, char* name, char* description);
 
-char* PListPrintNthDescr(PatientList patientList, char* surname, int n);
+// Adds a patient to the patient list
+bool PListAddPatient(PatientList* patientList, PatientPtr patientPtr);
 
-bool PListCopy(PatientList patientList, char* surname1, char* surname2);
+// Copies the disease from patient with name1 to patient with name2 in the patient list.
+bool PListCopyDisease(PatientList* patientList, char* name1, char* name2);
 
-bool PListHas(PatientList patientList, char* surname);
+// Changes the description of the nth disease for patient with name in the patient list.
+int PListChangeDescription(PatientList patientList, char* name, int n, char* description);
 
-bool PListModifyNthDescr(PatientList patientList, char* surname, int n, char* descr);
+// Returns a string corresponding to the description of the nth disease given by
+// a patient whose name is name
+char* PListPrintDescription(PatientList patientList, char* name, int n);
 
-bool PListClear(PatientList patientList);
+// Clears the disease history of a patient given by his name
+// Returns a bool depending on if he was on the list
+int PListDeletePatient(PatientList patientList, char* name);
+
+// Deletes the patient list
+void PListDelete(PatientList patientList);
+
+/*---------------------------------------------------------------------------*/
+// HOSPITAL - DATA STRUCTURE DEFINITION AND METHODS DECLARATION
+/*---------------------------------------------------------------------------*/
+
+// Hospital structure typedef and declaration
+typedef struct HospitalStruct {
+    int diseaseCounter;
+    PatientList patientList;
+} Hospital;
+
+// Creates an empty hospital and returns the pointer to it
+Hospital* HospitalCreate();
+
+// Returns the count of different diseases in the hospital.
+int HospitalGetDiseaseCounter(Hospital* hospital);
+
+// Adds a patient to the hospital.
+bool HospitalNewDisease(Hospital* hospital, char* name, char* description);
+
+// Copies the disease from patient with name1 to patient with name2 in the hospital.
+bool HospitalCopyDisease(Hospital* hospital, char* name1, char* name2);
+
+// Changes the description of the nth disease for patient with name in the hospital.
+bool HospitalChangeDescription(Hospital* hospital, char* name, int n, char* description);
+
+// Prints the description of the nth disease for patient with name in the hospital.
+char* HospitalPrintDescription(Hospital* hospital, char* name, int n);
+
+// Clears the disease list of patient with name in the hospital.
+bool HospitalDeletePatient(Hospital* hospital, char* name);
+
+// Deletes all the patients, diseases associated etc and all memory in the hospital.
+void HospitalDelete(Hospital* hospital);
 
 #endif
